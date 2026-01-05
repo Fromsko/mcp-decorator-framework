@@ -110,12 +110,10 @@ jobs:
 
       - name: 📝 创建 GitHub Release
         if: steps.version.outputs.changed == 'true'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.new }}
-          release_name: Release v${{ steps.version.outputs.new }}
+          name: Release v${{ steps.version.outputs.new }}
           body: |
             ## 📦 发布的包
 
@@ -124,9 +122,25 @@ jobs:
             - [@mcp-decorator/plugin-filesystem@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-filesystem)
             - [@mcp-decorator/plugin-http@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-http)
 
+            ## 📚 文档
+
+            - [快速入门](https://github.com/fromsko/mcp-decorator-framework/blob/main/docs/GETTING_STARTED.md)
+            - [API 参考](https://github.com/fromsko/mcp-decorator-framework/blob/main/docs/API.md)
+            - [插件开发](https://github.com/fromsko/mcp-decorator-framework/blob/main/docs/plugin-development.md)
+            - [部署指南](https://github.com/fromsko/mcp-decorator-framework/blob/main/docs/deployment.md)
+
+            ## 📝 变更日志
+
             查看 [CHANGELOG.md](https://github.com/fromsko/mcp-decorator-framework/blob/main/CHANGELOG.md) 了解详细变更。
+
+            ## 🚀 安装
+
+            ```bash
+            npm install @mcp-decorator/core reflect-metadata zod
+            ```
           draft: false
           prerelease: false
+          generate_release_notes: true
 
       - name: ⏭️ 跳过发布
         if: steps.version.outputs.changed == 'false'
