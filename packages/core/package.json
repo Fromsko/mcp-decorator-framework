@@ -39,6 +39,9 @@
     "url": "https://github.com/fromsko/mcp-decorator-framework/issues"
   },
   "homepage": "https://github.com/fromsko/mcp-decorator-framework#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@hono/node-server": "^1.19.7",
     "@modelcontextprotocol/sdk": "^1.25.1",

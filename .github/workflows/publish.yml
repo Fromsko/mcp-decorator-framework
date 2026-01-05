@@ -47,6 +47,7 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+          scope: "@mcp-decorator"
           cache: "pnpm"
 
       - name: 📦 安装依赖
@@ -61,17 +62,14 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: pnpm test
 
-      - name: 🔐 配置 npm 认证
-        if: steps.version.outputs.changed == 'true'
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: 🚀 发布 Core 包
         if: steps.version.outputs.changed == 'true'
         run: |
           cd packages/core
           npm publish --access public
           echo "✅ @mcp-decorator/core 发布成功"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: ⏳ 等待 NPM 索引更新
         if: steps.version.outputs.changed == 'true'
@@ -85,6 +83,8 @@ jobs:
           cd packages/plugin-math
           npm publish --access public
           echo "✅ @mcp-decorator/plugin-math 发布成功"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🚀 发布 Filesystem 插件
         if: steps.version.outputs.changed == 'true'
@@ -92,6 +92,8 @@ jobs:
           cd packages/plugin-filesystem
           npm publish --access public
           echo "✅ @mcp-decorator/plugin-filesystem 发布成功"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🚀 发布 HTTP 插件
         if: steps.version.outputs.changed == 'true'
@@ -99,6 +101,8 @@ jobs:
           cd packages/plugin-http
           npm publish --access public
           echo "✅ @mcp-decorator/plugin-http 发布成功"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🏷️ 创建 Git 标签
         if: steps.version.outputs.changed == 'true'

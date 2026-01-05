@@ -37,6 +37,9 @@
     "url": "https://github.com/fromsko/mcp-decorator-framework/issues"
   },
   "homepage": "https://github.com/fromsko/mcp-decorator-framework#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@mcp-decorator/core": "workspace:*",
     "zod": "^3.25.76"
