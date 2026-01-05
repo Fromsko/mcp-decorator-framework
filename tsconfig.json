@@ -1,0 +1,17 @@
+{
+    "files": [],
+    "references": [
+        {
+            "path": "./packages/core"
+        },
+        {
+            "path": "./packages/plugin-math"
+        },
+        {
+            "path": "./packages/plugin-filesystem"
+        },
+        {
+            "path": "./packages/plugin-http"
+        }
+    ]
+}
