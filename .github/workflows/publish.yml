@@ -66,7 +66,7 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: |
           cd packages/core
-          npm publish --access public
+          pnpm publish --access public --no-git-checks
           echo "✅ @mcp-decorator/core 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -81,7 +81,7 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: |
           cd packages/plugin-math
-          npm publish --access public
+          pnpm publish --access public --no-git-checks
           echo "✅ @mcp-decorator/plugin-math 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: |
           cd packages/plugin-filesystem
-          npm publish --access public
+          pnpm publish --access public --no-git-checks
           echo "✅ @mcp-decorator/plugin-filesystem 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -99,7 +99,7 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: |
           cd packages/plugin-http
-          npm publish --access public
+          pnpm publish --access public --no-git-checks
           echo "✅ @mcp-decorator/plugin-http 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
