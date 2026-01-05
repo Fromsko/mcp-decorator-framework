@@ -2,6 +2,9 @@
  * Unit tests for decorator system
  */
 
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck - Decorator type checking issues in test files
+import "reflect-metadata";
 import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -10,22 +13,51 @@ import {
   getAllCommands,
   getCommand,
   getCommandRegistry,
+  registerCommand,
 } from "../../src/index.js";
+
+// Test classes with @Param must be defined at module level
+@Command("test.params", "Command with parameters")
+class ParamCommand {
+  @Param(z.string())
+  name!: string;
+
+  @Param(z.number())
+  age!: number;
+
+  async execute(params: { name: string; age: number }) {
+    return { name: params.name, age: params.age };
+  }
+}
+
+@Command("test.withparams", "Test with params")
+class WithParamsCommand {
+  @Param(z.number())
+  a!: number;
+
+  @Param(z.number())
+  b!: number;
+
+  async execute(params: { a: number; b: number }) {
+    return { sum: params.a + params.b };
+  }
+}
 
 describe("Decorator System", () => {
   beforeEach(() => {
-    // Clear registry before each test
     getCommandRegistry().clear();
   });
 
   describe("Command Registry", () => {
-    it("should register a command with @Command decorator", () => {
+    it("should register a command with @Command decorator and registerCommand", () => {
       @Command("test.simple", "A simple test command")
       class SimpleCommand {
         async execute() {
           return { result: "success" };
         }
       }
+
+      registerCommand(SimpleCommand);
 
       const registry = getCommandRegistry();
       expect(registry.size).toBe(1);
@@ -39,6 +71,8 @@ describe("Decorator System", () => {
           return { result: "retrieved" };
         }
       }
+
+      registerCommand(RetrieveCommand);
 
       const command = getCommand("test.retrieve");
       expect(command).toBeDefined();
@@ -62,45 +96,34 @@ describe("Decorator System", () => {
         }
       }
 
+      registerCommand(FirstCommand);
+      registerCommand(SecondCommand);
+
       const commands = getAllCommands();
       expect(commands).toHaveLength(2);
       expect(commands.map((c) => c.type)).toContain("test.first");
       expect(commands.map((c) => c.type)).toContain("test.second");
     });
 
-    it("should throw error for duplicate command types", () => {
+    it("should skip duplicate registration silently", () => {
       @Command("test.duplicate", "First registration")
-      class FirstDuplicate {
+      class DuplicateCommand {
         async execute() {
           return { result: "first" };
         }
       }
 
-      expect(() => {
-        @Command("test.duplicate", "Second registration")
-        class SecondDuplicate {
-          async execute() {
-            return { result: "second" };
-          }
-        }
-      }).toThrow('Command type "test.duplicate" is already registered');
+      registerCommand(DuplicateCommand);
+      registerCommand(DuplicateCommand);
+
+      const registry = getCommandRegistry();
+      expect(registry.size).toBe(1);
     });
   });
 
   describe("@Param Decorator", () => {
     it("should store parameter schemas in metadata", () => {
-      @Command("test.params", "Command with parameters")
-      class ParamCommand {
-        @Param(z.string())
-        name!: string;
-
-        @Param(z.number())
-        age!: number;
-
-        async execute(params: any) {
-          return { name: params.name, age: params.age };
-        }
-      }
+      registerCommand(ParamCommand);
 
       const command = getCommand("test.params");
       expect(command).toBeDefined();
@@ -116,6 +139,8 @@ describe("Decorator System", () => {
           return { result: "no params" };
         }
       }
+
+      registerCommand(NoParamCommand);
 
       const command = getCommand("test.noparams");
       expect(command).toBeDefined();
@@ -134,6 +159,8 @@ describe("Decorator System", () => {
         }
       }
 
+      registerCommand(ExecuteCommand);
+
       const command = getCommand("test.execute");
       expect(command).toBeDefined();
 
@@ -142,18 +169,7 @@ describe("Decorator System", () => {
     });
 
     it("should pass parameters to execute method", async () => {
-      @Command("test.withparams", "Test with params")
-      class WithParamsCommand {
-        @Param(z.number())
-        a!: number;
-
-        @Param(z.number())
-        b!: number;
-
-        async execute(params: { a: number; b: number }) {
-          return { sum: params.a + params.b };
-        }
-      }
+      registerCommand(WithParamsCommand);
 
       const command = getCommand("test.withparams");
       expect(command).toBeDefined();

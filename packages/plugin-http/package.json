@@ -1,6 +1,6 @@
 {
   "name": "@mcp-decorator/plugin-http",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "HTTP operations plugin for MCP Decorator Framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -46,7 +46,7 @@
     "zod": "^3.25.76"
   },
   "peerDependencies": {
-    "@mcp-decorator/core": "^0.1.1"
+    "@mcp-decorator/core": "^0.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

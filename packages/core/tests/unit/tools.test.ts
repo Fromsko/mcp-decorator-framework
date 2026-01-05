@@ -10,6 +10,7 @@ import {
   executeCommand,
   getCommandRegistry,
   help,
+  registerCommand,
 } from "../../src/index.js";
 
 describe("MCP Tools Layer", () => {
@@ -33,6 +34,8 @@ describe("MCP Tools Layer", () => {
         }
       }
 
+      registerCommand(AddCommand);
+
       const response = await executeCommand({
         type: "test.add",
         params: { a: 5, b: 3 },
@@ -51,6 +54,8 @@ describe("MCP Tools Layer", () => {
           return { result: "success" };
         }
       }
+
+      registerCommand(KnownCommand);
 
       const response = await executeCommand({
         type: "test.unknown",
@@ -78,6 +83,8 @@ describe("MCP Tools Layer", () => {
         }
       }
 
+      registerCommand(ValidateCommand);
+
       const response = await executeCommand({
         type: "test.validate",
         params: { name: "John", age: "not a number" },
@@ -95,6 +102,8 @@ describe("MCP Tools Layer", () => {
           throw new Error("Something went wrong");
         }
       }
+
+      registerCommand(ErrorCommand);
 
       const response = await executeCommand({
         type: "test.error",
@@ -114,6 +123,8 @@ describe("MCP Tools Layer", () => {
         }
       }
 
+      registerCommand(NoParamsCommand);
+
       const response = await executeCommand({
         type: "test.noparams",
       });
@@ -129,6 +140,8 @@ describe("MCP Tools Layer", () => {
           return "Hello, World!";
         }
       }
+
+      registerCommand(StringCommand);
 
       const response = await executeCommand({
         type: "test.string",
@@ -158,6 +171,9 @@ describe("MCP Tools Layer", () => {
           return { result: "second" };
         }
       }
+
+      registerCommand(FirstCommand);
+      registerCommand(SecondCommand);
 
       const response = help();
 
@@ -195,6 +211,8 @@ describe("MCP Tools Layer", () => {
         }
       }
 
+      registerCommand(ExampleCommand);
+
       const response = help();
       const helpText = response.content[0].text!;
 
@@ -211,6 +229,8 @@ describe("MCP Tools Layer", () => {
           return { result: "simple" };
         }
       }
+
+      registerCommand(SimpleCommand);
 
       const response = help();
       const helpText = response.content[0].text!;

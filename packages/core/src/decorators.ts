@@ -6,7 +6,7 @@
 
 import "reflect-metadata";
 import type { z } from "zod";
-import { getCommandRegistry, type CommandMetadata } from "./registry.js";
+import { getCommandRegistry } from "./registry.js";
 
 /**
  * Metadata key for storing parameter schemas
@@ -14,51 +14,71 @@ import { getCommandRegistry, type CommandMetadata } from "./registry.js";
 const PARAMS_METADATA_KEY = "command:params";
 
 /**
+ * Metadata key for storing command info on class
+ */
+const COMMAND_METADATA_KEY = "command:info";
+
+/**
  * @Command decorator
  *
- * Registers a class as an MCP command
+ * Marks a class as an MCP command (lazy registration)
  *
  * @param type - Command type identifier (e.g., "math.add")
  * @param description - Human-readable description
  */
 export function Command(type: string, description: string): ClassDecorator {
   return function <T extends Function>(target: T): T {
-    // Get the command registry
-    const registry = getCommandRegistry();
-
-    // Check for duplicate command type
-    if (registry.has(type)) {
-      throw new Error(`Command type "${type}" is already registered`);
-    }
-
-    // Instantiate the class to access its methods
-    const instance = new (target as any)();
-
-    // Verify execute method exists
-    if (typeof instance.execute !== "function") {
-      throw new Error(
-        `Command class "${target.name}" must implement execute() method`
-      );
-    }
-
-    // Extract parameter metadata
-    const paramsMetadata =
-      Reflect.getMetadata(PARAMS_METADATA_KEY, target.prototype) ||
-      new Map<string, z.ZodTypeAny>();
-
-    // Create command metadata
-    const metadata: CommandMetadata = {
-      type,
-      description,
-      params: paramsMetadata,
-      handler: instance.execute.bind(instance),
-    };
-
-    // Register the command
-    registry.set(type, metadata);
-
+    // Store command metadata on the class for later registration
+    Reflect.defineMetadata(COMMAND_METADATA_KEY, { type, description }, target);
     return target;
   };
+}
+
+/**
+ * Register a command class to the registry
+ * Called when instantiating the class (via plugin.register())
+ */
+export function registerCommand(
+  CommandClass: new (...args: any[]) => any
+): void {
+  const registry = getCommandRegistry();
+
+  // Get stored metadata
+  const meta = Reflect.getMetadata(COMMAND_METADATA_KEY, CommandClass);
+  if (!meta) {
+    throw new Error(
+      `Class "${CommandClass.name}" is not decorated with @Command`
+    );
+  }
+
+  const { type, description } = meta;
+
+  // Skip if already registered
+  if (registry.has(type)) {
+    return;
+  }
+
+  // Instantiate to get handler
+  const instance = new CommandClass();
+
+  if (typeof instance.execute !== "function") {
+    throw new Error(
+      `Command class "${CommandClass.name}" must implement execute() method`
+    );
+  }
+
+  // Extract parameter metadata
+  const paramsMetadata =
+    Reflect.getMetadata(PARAMS_METADATA_KEY, CommandClass.prototype) ||
+    new Map<string, z.ZodTypeAny>();
+
+  // Register the command
+  registry.set(type, {
+    type,
+    description,
+    params: paramsMetadata,
+    handler: instance.execute.bind(instance),
+  });
 }
 
 /**
@@ -68,8 +88,10 @@ export function Command(type: string, description: string): ClassDecorator {
  *
  * @param schema - Zod schema for parameter validation
  */
-export function Param(schema: z.ZodTypeAny): PropertyDecorator {
-  return function (target: any, propertyKey: string | symbol): void {
+export function Param(
+  schema: z.ZodTypeAny
+): (target: object, propertyKey: string | symbol) => void {
+  return function (target: object, propertyKey: string | symbol): void {
     // Get existing params metadata or create new Map
     const existingParams =
       Reflect.getMetadata(PARAMS_METADATA_KEY, target) ||

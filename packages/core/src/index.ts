@@ -5,7 +5,7 @@
  */
 
 // Export decorators
-export { Command, Param } from "./decorators.js";
+export { Command, Param, registerCommand } from "./decorators.js";
 
 // Export registry functions and types
 export {

@@ -4,6 +4,8 @@
  * Interfaces and loader for MCP command plugins
  */
 
+import { registerCommand } from "./decorators";
+
 /**
  * Command class constructor type
  */
@@ -64,9 +66,9 @@ export async function loadPlugins(plugins: Plugin[]): Promise<void> {
       // Get command classes from plugin
       const commandClasses = plugin.register();
 
-      // Instantiate each command class to trigger @Command decorator
+      // Register each command class (lazy registration)
       for (const CommandClass of commandClasses) {
-        new CommandClass();
+        registerCommand(CommandClass);
       }
 
       // Store plugin reference for lifecycle management
