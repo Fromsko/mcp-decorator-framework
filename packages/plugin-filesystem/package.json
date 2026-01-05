@@ -1,6 +1,6 @@
 {
   "name": "@mcp-decorator/plugin-filesystem",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Filesystem operations plugin for MCP Decorator Framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -45,7 +45,7 @@
     "zod": "^3.25.76"
   },
   "peerDependencies": {
-    "@mcp-decorator/core": "^0.1.2"
+    "@mcp-decorator/core": "^0.1.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -1,6 +1,6 @@
 {
   "name": "mcp-decorator-framework",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "MCP Decorator Framework - Build MCP servers with TypeScript decorators",
   "type": "module",
