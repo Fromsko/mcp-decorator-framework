@@ -6,6 +6,7 @@ CORE_PKG := packages/core/package.json
 MATH_PKG := packages/plugin-math/package.json
 FS_PKG := packages/plugin-filesystem/package.json
 HTTP_PKG := packages/plugin-http/package.json
+MEMORY_PKG := packages/plugin-memory/package.json
 
 # Default target: show help and version info
 help:
@@ -14,11 +15,12 @@ help:
 	@echo "================================================================"
 	@echo ""
 	@echo "Current Versions:"
-	@echo "  root       -> $$(node -p "require('./$(ROOT_PKG)').version")"
-	@echo "  core       -> $$(node -p "require('./$(CORE_PKG)').version")"
-	@echo "  math       -> $$(node -p "require('./$(MATH_PKG)').version")"
-	@echo "  filesystem -> $$(node -p "require('./$(FS_PKG)').version")"
-	@echo "  http       -> $$(node -p "require('./$(HTTP_PKG)').version")"
+	@echo "  root       -> $$(node -p \"require('./$(ROOT_PKG)').version\")"
+	@echo "  core       -> $$(node -p \"require('./$(CORE_PKG)').version\")"
+	@echo "  math       -> $$(node -p \"require('./$(MATH_PKG)').version\")"
+	@echo "  filesystem -> $$(node -p \"require('./$(FS_PKG)').version\")"
+	@echo "  http       -> $$(node -p \"require('./$(HTTP_PKG)').version\")"
+	@echo "  memory     -> $$(node -p \"require('./$(MEMORY_PKG)').version\")"
 	@echo ""
 	@echo "Available Commands:"
 	@echo "  make version           - Show all package versions"
@@ -32,13 +34,13 @@ help:
 	@echo "Examples:"
 	@echo "  make up http           - Bump http plugin patch version (0.1.0 -> 0.1.1)"
 	@echo "  make up core minor     - Bump core minor version (0.1.0 -> 0.2.0)"
-	@echo "  make up math major     - Bump math major version (0.1.0 -> 1.0.0)"
+	@echo "  make up memory major   - Bump memory major version (0.1.0 -> 1.0.0)"
 	@echo "  make up root           - Bump root version"
 	@echo "  make up-all            - Bump all packages patch version"
 	@echo "  make up-all minor      - Bump all packages minor version"
 	@echo ""
 	@echo "Available Packages:"
-	@echo "  root, core, math, filesystem, http"
+	@echo "  root, core, math, filesystem, http, memory"
 	@echo ""
 	@echo "Version Types:"
 	@echo "  patch (default), minor, major"
@@ -47,11 +49,12 @@ help:
 # Show version info
 version:
 	@echo "Package Versions:"
-	@echo "  root       -> $$(node -p "require('./$(ROOT_PKG)').version")"
-	@echo "  core       -> $$(node -p "require('./$(CORE_PKG)').version")"
-	@echo "  math       -> $$(node -p "require('./$(MATH_PKG)').version")"
-	@echo "  filesystem -> $$(node -p "require('./$(FS_PKG)').version")"
-	@echo "  http       -> $$(node -p "require('./$(HTTP_PKG)').version")"
+	@echo "  root       -> $$(node -p \"require('./$(ROOT_PKG)').version\")"
+	@echo "  core       -> $$(node -p \"require('./$(CORE_PKG)').version\")"
+	@echo "  math       -> $$(node -p \"require('./$(MATH_PKG)').version\")"
+	@echo "  filesystem -> $$(node -p \"require('./$(FS_PKG)').version\")"
+	@echo "  http       -> $$(node -p \"require('./$(HTTP_PKG)').version\")"
+	@echo "  memory     -> $$(node -p \"require('./$(MEMORY_PKG)').version\")"
 
 # Bump version
 up:
@@ -69,19 +72,19 @@ up-all:
 # Build all packages
 build:
 	@echo "Building all packages..."
-	@bun run build
+	@pnpm run build
 	@echo "[OK] Build complete"
 
 # Run tests
 test:
 	@echo "Running tests..."
-	@bun test
+	@pnpm test
 	@echo "[OK] Tests passed"
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
-	@bun run clean
+	@pnpm run clean
 	@echo "[OK] Clean complete"
 
 # Publish all packages

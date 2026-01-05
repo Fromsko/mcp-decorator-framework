@@ -12,6 +12,9 @@
         },
         {
             "path": "./packages/plugin-http"
+        },
+        {
+            "path": "./packages/plugin-memory"
         }
     ]
 }

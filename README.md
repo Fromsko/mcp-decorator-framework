@@ -132,6 +132,7 @@ createStdioServer({
 | [@mcp-decorator/plugin-math](./packages/plugin-math)             | 基础数学运算  | `npm i @mcp-decorator/plugin-math`       |
 | [@mcp-decorator/plugin-filesystem](./packages/plugin-filesystem) | 文件系统操作  | `npm i @mcp-decorator/plugin-filesystem` |
 | [@mcp-decorator/plugin-http](./packages/plugin-http)             | HTTP 请求操作 | `npm i @mcp-decorator/plugin-http`       |
+| [@mcp-decorator/plugin-memory](./packages/plugin-memory)         | 记忆存储系统  | `npm i @mcp-decorator/plugin-memory`     |
 
 ## 多平台使用
 

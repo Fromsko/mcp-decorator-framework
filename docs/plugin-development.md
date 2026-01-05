@@ -219,6 +219,7 @@ npm publish
 - [Math Plugin](../packages/plugin-math/src/index.ts)
 - [Filesystem Plugin](../packages/plugin-filesystem/src/index.ts)
 - [HTTP Plugin](../packages/plugin-http/src/index.ts)
+- [Memory Plugin](../packages/plugin-memory/src/index.ts) - 记忆存储，含关键词图谱检索
 
 ## 社区插件
 

@@ -11,6 +11,7 @@ const packages = {
   math: "packages/plugin-math/package.json",
   filesystem: "packages/plugin-filesystem/package.json",
   http: "packages/plugin-http/package.json",
+  memory: "packages/plugin-memory/package.json",
 };
 
 function bumpVersion(version, type) {
@@ -37,7 +38,7 @@ function updatePackage(pkgPath) {
 }
 
 function syncCoreDeps(coreVersion) {
-  ["math", "filesystem", "http"].forEach((name) => {
+  ["math", "filesystem", "http", "memory"].forEach((name) => {
     const pkgPath = packages[name];
     const data = JSON.parse(readFileSync(pkgPath, "utf8"));
     // Use workspace protocol for monorepo - pnpm will convert on publish
@@ -75,6 +76,6 @@ if (pkg === "all") {
   }
 } else {
   console.error(`[!] Unknown package: ${pkg}`);
-  console.error("Available: root, core, math, filesystem, http, all");
+  console.error("Available: root, core, math, filesystem, http, memory, all");
   process.exit(1);
 }

@@ -26,6 +26,7 @@
 - [x] @mcp-decorator/plugin-math 配置正确
 - [x] @mcp-decorator/plugin-filesystem 配置正确
 - [x] @mcp-decorator/plugin-http 配置正确
+- [x] @mcp-decorator/plugin-memory 配置正确
 - [x] 所有插件依赖 @mcp-decorator/core@workspace:\*
 
 ## ✅ 文档
@@ -45,6 +46,7 @@
 - [x] packages/plugin-math/dist 目录存在且完整
 - [x] packages/plugin-filesystem/dist 目录存在且完整
 - [x] packages/plugin-http/dist 目录存在且完整
+- [x] packages/plugin-memory/dist 目录存在且完整
 - [x] 所有 .d.ts 类型定义文件生成
 
 ## ✅ 示例代码
@@ -89,6 +91,7 @@ ls packages/*/dist
 - @mcp-decorator/plugin-math: 0.1.0
 - @mcp-decorator/plugin-filesystem: 0.1.0
 - @mcp-decorator/plugin-http: 0.1.0
+- @mcp-decorator/plugin-memory: 0.1.0
 
 ## 🚀 发布命令
 
@@ -110,6 +113,9 @@ pnpm publish --access public
 
 cd ../plugin-http
 pnpm publish --access public
+
+cd ../plugin-memory
+pnpm publish --access public
 ```
 
 ### 一键发布所有包
@@ -129,6 +135,7 @@ pnpm -r publish --access public
 - [ ] https://www.npmjs.com/package/@mcp-decorator/plugin-math
 - [ ] https://www.npmjs.com/package/@mcp-decorator/plugin-filesystem
 - [ ] https://www.npmjs.com/package/@mcp-decorator/plugin-http
+- [ ] https://www.npmjs.com/package/@mcp-decorator/plugin-memory
 
 ### 2. 测试安装
 
@@ -145,6 +152,7 @@ npm install @mcp-decorator/core reflect-metadata zod
 npm install @mcp-decorator/plugin-math
 npm install @mcp-decorator/plugin-filesystem
 npm install @mcp-decorator/plugin-http
+npm install @mcp-decorator/plugin-memory
 
 # 验证安装
 ls node_modules/@mcp-decorator

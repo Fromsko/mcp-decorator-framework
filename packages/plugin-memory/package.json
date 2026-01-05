@@ -1,0 +1,40 @@
+{
+  "name": "@mcp-decorator/plugin-memory",
+  "version": "0.1.0",
+  "description": "Memory storage plugin with SQLite backend, keyword graph indexing, and WebDAV sync",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@mcp-decorator/core": "workspace:*",
+    "better-sqlite3": "^11.7.0",
+    "webdav": "^5.8.0",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "zod": "^3.24.1"
+  },
+  "keywords": [
+    "mcp",
+    "memory",
+    "sqlite",
+    "knowledge-graph",
+    "webdav"
+  ],
+  "license": "MIT"
+}

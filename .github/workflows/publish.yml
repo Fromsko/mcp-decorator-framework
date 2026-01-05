@@ -104,6 +104,15 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: 🚀 发布 Memory 插件
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          cd packages/plugin-memory
+          pnpm publish --access public --no-git-checks
+          echo "✅ @mcp-decorator/plugin-memory 发布成功"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: 🏷️ 创建 Git 标签
         if: steps.version.outputs.changed == 'true'
         run: |
@@ -125,6 +134,7 @@ jobs:
             - [@mcp-decorator/plugin-math@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-math)
             - [@mcp-decorator/plugin-filesystem@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-filesystem)
             - [@mcp-decorator/plugin-http@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-http)
+            - [@mcp-decorator/plugin-memory@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-memory)
 
             ## 📚 文档
 
