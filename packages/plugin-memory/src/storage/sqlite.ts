@@ -1,20 +1,82 @@
 /**
  * SQLite Storage Backend
+ * 支持 Node.js (better-sqlite3) 和 Bun (bun:sqlite) 双运行时
  */
 
-import type { Database as DatabaseType } from "better-sqlite3";
-import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
 import type { KeywordNode, MemoryEntry, StorageBackend } from "../types.js";
 
+// 运行时检测
+const isBun = typeof (globalThis as any).Bun !== "undefined";
+
+// 统一的数据库接口
+interface DBAdapter {
+  exec(sql: string): void;
+  prepare(sql: string): StatementAdapter;
+  close(): void;
+}
+
+interface StatementAdapter {
+  run(...params: unknown[]): { changes: number };
+  get(...params: unknown[]): unknown;
+  all(...params: unknown[]): unknown[];
+}
+
+// Bun SQLite 适配器
+async function createBunAdapter(dbPath: string): Promise<DBAdapter> {
+  // @ts-ignore - bun:sqlite 仅在 Bun 运行时可用
+  const { Database } = await import("bun:sqlite");
+  const db = new Database(dbPath);
+  db.exec("PRAGMA journal_mode = WAL");
+
+  return {
+    exec: (sql: string) => db.exec(sql),
+    prepare: (sql: string) => {
+      const stmt = db.prepare(sql);
+      return {
+        run: (...params: unknown[]) => {
+          stmt.run(...params);
+          return { changes: db.changes };
+        },
+        get: (...params: unknown[]) => stmt.get(...params),
+        all: (...params: unknown[]) => stmt.all(...params),
+      };
+    },
+    close: () => db.close(),
+  };
+}
+
+// Node.js better-sqlite3 适配器
+async function createNodeAdapter(dbPath: string): Promise<DBAdapter> {
+  const Database = (await import("better-sqlite3")).default;
+  const db = new Database(dbPath);
+  db.pragma("journal_mode = WAL");
+
+  return {
+    exec: (sql: string) => db.exec(sql),
+    prepare: (sql: string) => {
+      const stmt = db.prepare(sql);
+      return {
+        run: (...params: unknown[]) =>
+          stmt.run(...params) as { changes: number },
+        get: (...params: unknown[]) => stmt.get(...params),
+        all: (...params: unknown[]) => stmt.all(...params),
+      };
+    },
+    close: () => db.close(),
+  };
+}
+
 export class SQLiteStorage implements StorageBackend {
-  private db: DatabaseType | null = null;
+  private db: DBAdapter | null = null;
 
   constructor(private dbPath: string) {}
 
   async init(): Promise<void> {
-    this.db = new Database(this.dbPath);
-    this.db.pragma("journal_mode = WAL");
+    // 根据运行时选择适配器
+    this.db = isBun
+      ? await createBunAdapter(this.dbPath)
+      : await createNodeAdapter(this.dbPath);
 
     // 创建表
     this.db.exec(`
@@ -37,31 +99,22 @@ export class SQLiteStorage implements StorageBackend {
         weight REAL NOT NULL,
         connections TEXT NOT NULL
       );
-      
-      CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
-        content,
-        keywords,
-        content='memories',
-        content_rowid='rowid'
-      );
-      
-      CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
-        INSERT INTO memories_fts(rowid, content, keywords) 
-        VALUES (NEW.rowid, NEW.content, NEW.keywords);
-      END;
-      
-      CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
-        INSERT INTO memories_fts(memories_fts, rowid, content, keywords) 
-        VALUES ('delete', OLD.rowid, OLD.content, OLD.keywords);
-      END;
-      
-      CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
-        INSERT INTO memories_fts(memories_fts, rowid, content, keywords) 
-        VALUES ('delete', OLD.rowid, OLD.content, OLD.keywords);
-        INSERT INTO memories_fts(rowid, content, keywords) 
-        VALUES (NEW.rowid, NEW.content, NEW.keywords);
-      END;
     `);
+
+    // FTS5 仅在支持时创建（Bun 和 Node 都支持）
+    try {
+      this.db.exec(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
+          content,
+          keywords,
+          content='memories',
+          content_rowid='rowid'
+        );
+      `);
+    } catch {
+      // FTS5 不可用时跳过
+      console.warn("[memory] FTS5 not available, full-text search disabled");
+    }
   }
 
   async close(): Promise<void> {
@@ -69,7 +122,7 @@ export class SQLiteStorage implements StorageBackend {
     this.db = null;
   }
 
-  private ensureDb(): DatabaseType {
+  private ensureDb(): DBAdapter {
     if (!this.db) throw new Error("Database not initialized");
     return this.db;
   }
@@ -169,24 +222,21 @@ export class SQLiteStorage implements StorageBackend {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const transaction = db.transaction(() => {
-      for (const entry of entries) {
-        const id = randomUUID();
-        insert.run(
-          id,
-          entry.content,
-          JSON.stringify(entry.keywords),
-          entry.category || null,
-          entry.source || null,
-          entry.metadata ? JSON.stringify(entry.metadata) : null,
-          now,
-          now
-        );
-        results.push({ ...entry, id, createdAt: now, updatedAt: now });
-      }
-    });
+    for (const entry of entries) {
+      const id = randomUUID();
+      insert.run(
+        id,
+        entry.content,
+        JSON.stringify(entry.keywords),
+        entry.category || null,
+        entry.source || null,
+        entry.metadata ? JSON.stringify(entry.metadata) : null,
+        now,
+        now
+      );
+      results.push({ ...entry, id, createdAt: now, updatedAt: now });
+    }
 
-    transaction();
     return results;
   }
 
@@ -199,7 +249,7 @@ export class SQLiteStorage implements StorageBackend {
     const { category, limit = 100, offset = 0 } = options || {};
 
     let sql = "SELECT * FROM memories";
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (category) {
       sql += " WHERE category = ?";
@@ -209,7 +259,7 @@ export class SQLiteStorage implements StorageBackend {
     sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
     params.push(limit, offset);
 
-    const rows = db.prepare(sql).all(...params);
+    const rows = db.prepare(sql).all(...params) as any[];
     return rows.map((row) => this.rowToEntry(row));
   }
 
@@ -236,34 +286,35 @@ export class SQLiteStorage implements StorageBackend {
       VALUES (?, ?, ?)
     `);
 
-    const transaction = db.transaction(() => {
-      for (const [keyword, node] of Array.from(graph)) {
-        upsert.run(
-          keyword,
-          node.weight,
-          JSON.stringify(Object.fromEntries(node.connections))
-        );
-      }
-    });
-
-    transaction();
+    for (const [keyword, node] of Array.from(graph)) {
+      upsert.run(
+        keyword,
+        node.weight,
+        JSON.stringify(Object.fromEntries(node.connections))
+      );
+    }
   }
 
   /** FTS 全文搜索 */
   searchFTS(query: string, limit: number = 20): MemoryEntry[] {
     const db = this.ensureDb();
-    const rows = db
-      .prepare(
-        `
-      SELECT m.* FROM memories m
-      JOIN memories_fts fts ON m.rowid = fts.rowid
-      WHERE memories_fts MATCH ?
-      ORDER BY rank
-      LIMIT ?
-    `
-      )
-      .all(query, limit) as any[];
+    try {
+      const rows = db
+        .prepare(
+          `
+        SELECT m.* FROM memories m
+        JOIN memories_fts fts ON m.rowid = fts.rowid
+        WHERE memories_fts MATCH ?
+        ORDER BY rank
+        LIMIT ?
+      `
+        )
+        .all(query, limit) as any[];
 
-    return rows.map((row) => this.rowToEntry(row));
+      return rows.map((row) => this.rowToEntry(row));
+    } catch {
+      // FTS 不可用时返回空
+      return [];
+    }
   }
 }
