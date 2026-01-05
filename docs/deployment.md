@@ -103,38 +103,38 @@ services:
 
 ## Vercel 部署
 
+使用 `createMcpApp` 返回 Hono 实例，直接导出即可部署到 Vercel。
+
 ### 1. 创建 API 路由
 
 ```typescript
-// api/mcp.ts
-import { createHttpServer } from "@mcp-decorator/core";
+// api/[[...route]].ts
+import { createMcpApp } from "@mcp-decorator/core";
+import { MathPlugin } from "@mcp-decorator/plugin-math";
+import { handle } from "hono/vercel";
 
-export default async function handler(req: any, res: any) {
-  // 初始化服务器
-  await createHttpServer({
-    name: "my-server",
-    port: 3000,
-  });
-}
+const app = await createMcpApp({
+  name: "my-mcp-server",
+  version: "1.0.0",
+  plugins: [new MathPlugin()],
+  basePath: "/api",
+});
+
+// 自定义路由
+app.get("/api", (c) => c.json({ name: "my-mcp-server", status: "ok" }));
+app.get("/api/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
+
+export const GET = handle(app);
+export const POST = handle(app);
 ```
 
 ### 2. vercel.json
 
 ```json
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/mcp/(.*)",
-      "dest": "/api/mcp"
-    }
-  ]
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "framework": null
 }
 ```
 
@@ -143,6 +143,45 @@ export default async function handler(req: any, res: any) {
 ```bash
 vercel deploy
 ```
+
+MCP 端点：`https://your-app.vercel.app/api/mcp`
+
+### Cloudflare Workers 部署
+
+```typescript
+// src/index.ts
+import { createMcpApp } from "@mcp-decorator/core";
+import { MathPlugin } from "@mcp-decorator/plugin-math";
+
+const app = await createMcpApp({
+  name: "my-mcp-server",
+  plugins: [new MathPlugin()],
+});
+
+export default app;
+```
+
+### Bun 本地运行
+
+```typescript
+import { createMcpApp } from "@mcp-decorator/core";
+import { MathPlugin } from "@mcp-decorator/plugin-math";
+
+const app = await createMcpApp({
+  name: "my-mcp-server",
+  plugins: [new MathPlugin()],
+});
+
+// 自定义路由
+app.get("/", (c) => c.text("MCP Server"));
+
+export default {
+  port: 3000,
+  fetch: app.fetch,
+};
+```
+
+运行：`bun run src/index.ts`
 
 ## Railway 部署
 
@@ -355,17 +394,20 @@ sudo certbot renew --dry-run
 ### 健康检查端点
 
 ```typescript
-import { createHttpServer } from "@mcp-decorator/core";
+import { createMcpApp } from "@mcp-decorator/core";
 
-const app = createHttpServer({
+const app = await createMcpApp({
   name: "my-server",
-  port: 3000,
 });
 
 // 添加健康检查
 app.get("/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// 启动服务
+import { serve } from "@hono/node-server";
+serve({ fetch: app.fetch, port: 3000 });
 ```
 
 ### 日志管理
@@ -406,14 +448,17 @@ if (cluster.isPrimary) {
 ### 2. 启用压缩
 
 ```typescript
+import { createMcpApp } from "@mcp-decorator/core";
 import { compress } from "hono/compress";
 
-const app = createHttpServer({
+const app = await createMcpApp({
   name: "my-server",
-  port: 3000,
 });
 
 app.use("*", compress());
+
+import { serve } from "@hono/node-server";
+serve({ fetch: app.fetch, port: 3000 });
 ```
 
 ### 3. 缓存策略

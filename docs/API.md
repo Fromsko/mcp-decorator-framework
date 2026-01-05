@@ -70,6 +70,48 @@ await createStdioServer({
 });
 ```
 
+### createMcpApp(config)
+
+创建 Hono 应用实例，挂载 MCP 处理器。返回的 app 可以扩展自定义路由，部署到 Vercel/Cloudflare 等平台。
+
+**参数：**
+
+```typescript
+interface McpAppConfig {
+  name: string; // 服务器名称
+  version?: string; // 版本号
+  basePath?: string; // 基础路径，默认 ""
+  plugins?: Plugin[]; // 插件列表
+  logLevel?: "debug" | "info" | "error"; // 日志级别
+}
+```
+
+**返回：** `Promise<Hono>`
+
+**示例：**
+
+```typescript
+import { createMcpApp } from "@mcp-decorator/core";
+import { MathPlugin } from "@mcp-decorator/plugin-math";
+
+const app = await createMcpApp({
+  name: "my-server",
+  plugins: [new MathPlugin()],
+  basePath: "/api",
+});
+
+// 添加自定义路由
+app.get("/", (c) => c.text("Hello MCP!"));
+app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Vercel 部署
+export default app;
+
+// 或本地运行
+import { serve } from "@hono/node-server";
+serve({ fetch: app.fetch, port: 3000 });
+```
+
 ### createHttpServer(config)
 
 创建使用 HTTP 传输的 MCP 服务器。

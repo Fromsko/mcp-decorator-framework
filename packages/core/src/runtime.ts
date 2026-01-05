@@ -163,20 +163,14 @@ export async function createStdioServer(
 }
 
 /**
- * Configuration for HTTP server
+ * Configuration for MCP app (Hono instance)
  */
-export interface HttpServerConfig {
+export interface McpAppConfig {
   /** Server name */
   name: string;
 
   /** Server version (optional) */
   version?: string;
-
-  /** Port to listen on (default: 3000) */
-  port?: number;
-
-  /** Host to bind to (default: "localhost") */
-  host?: string;
 
   /** Base path for MCP endpoints (default: "") */
   basePath?: string;
@@ -189,18 +183,32 @@ export interface HttpServerConfig {
 }
 
 /**
- * Create and start an MCP server using HTTP transport
+ * Create a Hono app with MCP handler mounted
  *
- * @param config - Server configuration
+ * Returns a Hono instance that can be:
+ * - Extended with custom routes
+ * - Deployed to Vercel/Cloudflare/etc.
+ * - Used with any Hono-compatible server
+ *
+ * @example
+ * ```typescript
+ * const app = await createMcpApp({
+ *   name: 'my-server',
+ *   plugins: [new MathPlugin()],
+ *   basePath: '/api',
+ * });
+ *
+ * // Add custom routes
+ * app.get('/', (c) => c.text('Hello!'));
+ *
+ * // Vercel: export default app;
+ * // Node.js: serve({ fetch: app.fetch, port: 3000 });
+ * ```
  */
-export async function createHttpServer(
-  config: HttpServerConfig
-): Promise<void> {
+export async function createMcpApp(config: McpAppConfig): Promise<Hono> {
   const {
     name,
     version = "1.0.0",
-    port = 3000,
-    host = "localhost",
     basePath = "",
     plugins = [],
     logLevel = "info",
@@ -269,6 +277,45 @@ export async function createHttpServer(
     return await mcpHandler(c.req.raw);
   });
 
+  if (logLevel === "debug") {
+    console.log(`MCP app "${name}" v${version} created`);
+    console.log(`MCP endpoint path: ${mcpPath}/*`);
+  }
+
+  return app;
+}
+
+/**
+ * Configuration for HTTP server
+ */
+export interface HttpServerConfig extends McpAppConfig {
+  /** Port to listen on (default: 3000) */
+  port?: number;
+
+  /** Host to bind to (default: "localhost") */
+  host?: string;
+}
+
+/**
+ * Create and start an MCP server using HTTP transport
+ *
+ * @param config - Server configuration
+ */
+export async function createHttpServer(
+  config: HttpServerConfig
+): Promise<void> {
+  const {
+    name,
+    version = "1.0.0",
+    port = 3000,
+    host = "localhost",
+    basePath = "",
+    logLevel = "info",
+  } = config;
+
+  // Create MCP app (handles plugin loading)
+  const app = await createMcpApp(config);
+
   // Start HTTP server
   serve({
     fetch: app.fetch,
@@ -279,7 +326,7 @@ export async function createHttpServer(
   // Log server start (if not in error-only mode)
   if (logLevel !== "error") {
     const serverUrl = `http://${host}:${port}`;
-    const mcpEndpoint = `${serverUrl}${mcpPath}`;
+    const mcpEndpoint = `${serverUrl}${basePath}/mcp`;
     console.log(`MCP server "${name}" v${version} started`);
     console.log(`Server URL: ${serverUrl}`);
     console.log(`MCP endpoint: ${mcpEndpoint}`);

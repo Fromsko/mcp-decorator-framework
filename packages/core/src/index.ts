@@ -36,7 +36,9 @@ export {
 // Export runtime
 export {
   createHttpServer,
+  createMcpApp,
   createStdioServer,
   type HttpServerConfig,
+  type McpAppConfig,
   type StdioServerConfig,
 } from "./runtime.js";

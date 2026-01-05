@@ -45,7 +45,7 @@
     "zod": "^3.25.76"
   },
   "peerDependencies": {
-    "@mcp-decorator/core": "^0.1.3"
+    "@mcp-decorator/core": "^0.1.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
