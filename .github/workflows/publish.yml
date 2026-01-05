@@ -19,30 +19,48 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: 🔍 检测版本变化
-        id: version
+      - name: 🔍 检测各包版本变化
+        id: changes
         run: |
-          # 检测根目录 package.json 版本变化
-          OLD=$(git show HEAD^:package.json 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "0.0.0")
-          NEW=$(grep '"version"' package.json | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
-          echo "old=$OLD" >> $GITHUB_OUTPUT
-          echo "new=$NEW" >> $GITHUB_OUTPUT
-          if [ "$OLD" != "$NEW" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "📦 版本变化: $OLD → $NEW"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "⏭️ 版本未变化: $NEW"
+          check_version() {
+            local name=$1
+            local path=$2
+            local old=$(git show HEAD^:$path 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "0.0.0")
+            local new=$(grep '"version"' $path | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+            echo "${name}_old=$old" >> $GITHUB_OUTPUT
+            echo "${name}_new=$new" >> $GITHUB_OUTPUT
+            if [ "$old" != "$new" ]; then
+              echo "${name}=true" >> $GITHUB_OUTPUT
+              echo "📦 $name: $old → $new"
+              return 0
+            else
+              echo "${name}=false" >> $GITHUB_OUTPUT
+              return 1
+            fi
+          }
+
+          ANY_CHANGED=false
+
+          check_version "core" "packages/core/package.json" && ANY_CHANGED=true
+          check_version "math" "packages/plugin-math/package.json" && ANY_CHANGED=true
+          check_version "filesystem" "packages/plugin-filesystem/package.json" && ANY_CHANGED=true
+          check_version "http" "packages/plugin-http/package.json" && ANY_CHANGED=true
+          check_version "memory" "packages/plugin-memory/package.json" && ANY_CHANGED=true
+
+          echo "any_changed=$ANY_CHANGED" >> $GITHUB_OUTPUT
+
+          if [ "$ANY_CHANGED" = "false" ]; then
+            echo "⏭️ 没有包版本变化"
           fi
 
       - name: ⚙️ 设置 pnpm
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
       - name: ⚙️ 设置 Node.js
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -51,90 +69,128 @@ jobs:
           cache: "pnpm"
 
       - name: 📦 安装依赖
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         run: pnpm install --no-frozen-lockfile
 
       - name: 🔨 构建所有包
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         run: pnpm run build
 
       - name: 🧪 运行测试
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         run: pnpm test
 
       - name: 🚀 发布 Core 包
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.core == 'true'
         run: |
           cd packages/core
           pnpm publish --access public --no-git-checks
-          echo "✅ @mcp-decorator/core 发布成功"
+          echo "✅ @mcp-decorator/core@${{ steps.changes.outputs.core_new }} 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: ⏳ 等待 NPM 索引更新
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.core == 'true'
         run: |
           echo "等待 NPM 索引更新..."
           sleep 60
 
       - name: 🚀 发布 Math 插件
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.math == 'true'
         run: |
           cd packages/plugin-math
           pnpm publish --access public --no-git-checks
-          echo "✅ @mcp-decorator/plugin-math 发布成功"
+          echo "✅ @mcp-decorator/plugin-math@${{ steps.changes.outputs.math_new }} 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🚀 发布 Filesystem 插件
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.filesystem == 'true'
         run: |
           cd packages/plugin-filesystem
           pnpm publish --access public --no-git-checks
-          echo "✅ @mcp-decorator/plugin-filesystem 发布成功"
+          echo "✅ @mcp-decorator/plugin-filesystem@${{ steps.changes.outputs.filesystem_new }} 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🚀 发布 HTTP 插件
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.http == 'true'
         run: |
           cd packages/plugin-http
           pnpm publish --access public --no-git-checks
-          echo "✅ @mcp-decorator/plugin-http 发布成功"
+          echo "✅ @mcp-decorator/plugin-http@${{ steps.changes.outputs.http_new }} 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🚀 发布 Memory 插件
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.memory == 'true'
         run: |
           cd packages/plugin-memory
           pnpm publish --access public --no-git-checks
-          echo "✅ @mcp-decorator/plugin-memory 发布成功"
+          echo "✅ @mcp-decorator/plugin-memory@${{ steps.changes.outputs.memory_new }} 发布成功"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 🏷️ 创建 Git 标签
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ steps.version.outputs.new }}" -m "Release v${{ steps.version.outputs.new }}"
-          git push --tags
+
+          # 为每个变化的包创建标签
+          if [ "${{ steps.changes.outputs.core }}" = "true" ]; then
+            git tag -a "core@${{ steps.changes.outputs.core_new }}" -m "Release @mcp-decorator/core@${{ steps.changes.outputs.core_new }}" || true
+          fi
+          if [ "${{ steps.changes.outputs.math }}" = "true" ]; then
+            git tag -a "plugin-math@${{ steps.changes.outputs.math_new }}" -m "Release @mcp-decorator/plugin-math@${{ steps.changes.outputs.math_new }}" || true
+          fi
+          if [ "${{ steps.changes.outputs.filesystem }}" = "true" ]; then
+            git tag -a "plugin-filesystem@${{ steps.changes.outputs.filesystem_new }}" -m "Release @mcp-decorator/plugin-filesystem@${{ steps.changes.outputs.filesystem_new }}" || true
+          fi
+          if [ "${{ steps.changes.outputs.http }}" = "true" ]; then
+            git tag -a "plugin-http@${{ steps.changes.outputs.http_new }}" -m "Release @mcp-decorator/plugin-http@${{ steps.changes.outputs.http_new }}" || true
+          fi
+          if [ "${{ steps.changes.outputs.memory }}" = "true" ]; then
+            git tag -a "plugin-memory@${{ steps.changes.outputs.memory_new }}" -m "Release @mcp-decorator/plugin-memory@${{ steps.changes.outputs.memory_new }}" || true
+          fi
+
+          git push --tags || true
+
+      - name: 📝 生成发布说明
+        if: steps.changes.outputs.any_changed == 'true'
+        id: release_notes
+        run: |
+          NOTES="## 📦 本次发布的包\n\n"
+
+          if [ "${{ steps.changes.outputs.core }}" = "true" ]; then
+            NOTES="${NOTES}- [@mcp-decorator/core@${{ steps.changes.outputs.core_new }}](https://www.npmjs.com/package/@mcp-decorator/core)\n"
+          fi
+          if [ "${{ steps.changes.outputs.math }}" = "true" ]; then
+            NOTES="${NOTES}- [@mcp-decorator/plugin-math@${{ steps.changes.outputs.math_new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-math)\n"
+          fi
+          if [ "${{ steps.changes.outputs.filesystem }}" = "true" ]; then
+            NOTES="${NOTES}- [@mcp-decorator/plugin-filesystem@${{ steps.changes.outputs.filesystem_new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-filesystem)\n"
+          fi
+          if [ "${{ steps.changes.outputs.http }}" = "true" ]; then
+            NOTES="${NOTES}- [@mcp-decorator/plugin-http@${{ steps.changes.outputs.http_new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-http)\n"
+          fi
+          if [ "${{ steps.changes.outputs.memory }}" = "true" ]; then
+            NOTES="${NOTES}- [@mcp-decorator/plugin-memory@${{ steps.changes.outputs.memory_new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-memory)\n"
+          fi
+
+          # 使用 EOF 处理多行
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: 📝 创建 GitHub Release
-        if: steps.version.outputs.changed == 'true'
+        if: steps.changes.outputs.any_changed == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.new }}
-          name: Release v${{ steps.version.outputs.new }}
+          tag_name: release-${{ github.run_number }}
+          name: Release ${{ github.run_number }}
           body: |
-            ## 📦 发布的包
-
-            - [@mcp-decorator/core@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/core)
-            - [@mcp-decorator/plugin-math@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-math)
-            - [@mcp-decorator/plugin-filesystem@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-filesystem)
-            - [@mcp-decorator/plugin-http@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-http)
-            - [@mcp-decorator/plugin-memory@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-memory)
+            ${{ steps.release_notes.outputs.notes }}
 
             ## 📚 文档
 
@@ -157,5 +213,5 @@ jobs:
           generate_release_notes: true
 
       - name: ⏭️ 跳过发布
-        if: steps.version.outputs.changed == 'false'
-        run: echo "版本未变化，跳过发布"
+        if: steps.changes.outputs.any_changed == 'false'
+        run: echo "没有包版本变化，跳过发布"

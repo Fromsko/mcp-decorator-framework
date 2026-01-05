@@ -15,12 +15,12 @@ help:
 	@echo "================================================================"
 	@echo ""
 	@echo "Current Versions:"
-	@echo "  root       -> $$(node -p \"require('./$(ROOT_PKG)').version\")"
-	@echo "  core       -> $$(node -p \"require('./$(CORE_PKG)').version\")"
-	@echo "  math       -> $$(node -p \"require('./$(MATH_PKG)').version\")"
-	@echo "  filesystem -> $$(node -p \"require('./$(FS_PKG)').version\")"
-	@echo "  http       -> $$(node -p \"require('./$(HTTP_PKG)').version\")"
-	@echo "  memory     -> $$(node -p \"require('./$(MEMORY_PKG)').version\")"
+	@node -p "'  root       -> ' + require('./$(ROOT_PKG)').version"
+	@node -p "'  core       -> ' + require('./$(CORE_PKG)').version"
+	@node -p "'  math       -> ' + require('./$(MATH_PKG)').version"
+	@node -p "'  filesystem -> ' + require('./$(FS_PKG)').version"
+	@node -p "'  http       -> ' + require('./$(HTTP_PKG)').version"
+	@node -p "'  memory     -> ' + require('./$(MEMORY_PKG)').version"
 	@echo ""
 	@echo "Available Commands:"
 	@echo "  make version           - Show all package versions"
@@ -49,12 +49,12 @@ help:
 # Show version info
 version:
 	@echo "Package Versions:"
-	@echo "  root       -> $$(node -p \"require('./$(ROOT_PKG)').version\")"
-	@echo "  core       -> $$(node -p \"require('./$(CORE_PKG)').version\")"
-	@echo "  math       -> $$(node -p \"require('./$(MATH_PKG)').version\")"
-	@echo "  filesystem -> $$(node -p \"require('./$(FS_PKG)').version\")"
-	@echo "  http       -> $$(node -p \"require('./$(HTTP_PKG)').version\")"
-	@echo "  memory     -> $$(node -p \"require('./$(MEMORY_PKG)').version\")"
+	@node -p "'  root       -> ' + require('./$(ROOT_PKG)').version"
+	@node -p "'  core       -> ' + require('./$(CORE_PKG)').version"
+	@node -p "'  math       -> ' + require('./$(MATH_PKG)').version"
+	@node -p "'  filesystem -> ' + require('./$(FS_PKG)').version"
+	@node -p "'  http       -> ' + require('./$(HTTP_PKG)').version"
+	@node -p "'  memory     -> ' + require('./$(MEMORY_PKG)').version"
 
 # Bump version
 up:
