@@ -4,6 +4,8 @@
  */
 
 import { randomUUID } from "crypto";
+import { mkdir } from "fs/promises";
+import { dirname } from "path";
 import type { KeywordNode, MemoryEntry, StorageBackend } from "../types.js";
 
 // 运行时检测
@@ -73,6 +75,12 @@ export class SQLiteStorage implements StorageBackend {
   constructor(private dbPath: string) {}
 
   async init(): Promise<void> {
+    // 确保目录存在
+    const dir = dirname(this.dbPath);
+    if (dir && dir !== ".") {
+      await mkdir(dir, { recursive: true });
+    }
+
     // 根据运行时选择适配器
     this.db = isBun
       ? await createBunAdapter(this.dbPath)
