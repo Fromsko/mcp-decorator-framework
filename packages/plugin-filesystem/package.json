@@ -1,0 +1,49 @@
+{
+  "name": "@mcp-decorator/plugin-filesystem",
+  "version": "0.1.0",
+  "description": "Filesystem operations plugin for MCP Decorator Framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "mcp",
+    "plugin",
+    "filesystem",
+    "file"
+  ],
+  "author": "fromsko",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fromsko/mcp-decorator-framework.git",
+    "directory": "packages/plugin-filesystem"
+  },
+  "bugs": {
+    "url": "https://github.com/fromsko/mcp-decorator-framework/issues"
+  },
+  "homepage": "https://github.com/fromsko/mcp-decorator-framework#readme",
+  "dependencies": {
+    "@mcp-decorator/core": "workspace:*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  }
+}
