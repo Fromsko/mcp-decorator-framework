@@ -78,7 +78,7 @@ bun run server.ts
 
 #### @Command(type, description)
 
-Registers a class as an MCP command.
+Registers a class as an MCP command. Note: This decorator only stores metadata. The actual registration happens when `registerCommand()` is called (automatically by the plugin system).
 
 ```typescript
 @Command("math.add", "Add two numbers")

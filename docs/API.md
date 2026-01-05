@@ -217,6 +217,32 @@ interface CommandMetadata {
 
 **返回：** `CommandMetadata[]`
 
+### registerCommand(CommandClass)
+
+手动注册一个命令类到注册表（延迟注册机制）。
+
+**参数：**
+
+- `CommandClass`: 使用 `@Command` 装饰的类
+
+**说明：**
+
+`@Command` 装饰器仅存储元数据，不会立即注册命令。需要调用 `registerCommand()` 完成实际注册。插件系统会自动调用此函数，通常不需要手动调用。
+
+**示例：**
+
+```typescript
+@Command("my.command", "My command")
+class MyCommand {
+  async execute() {
+    return { content: [{ type: "text", text: "done" }] };
+  }
+}
+
+// 手动注册（通常由插件系统自动完成）
+registerCommand(MyCommand);
+```
+
 ## 工具函数
 
 ### executeCommand(input)
@@ -321,8 +347,8 @@ async execute(params: any) {
 
 1. 加载插件
 2. 调用所有插件的 `init()` 方法
-3. 调用所有插件的 `register()` 方法
-4. 实例化命令类（触发 `@Command` 装饰器）
+3. 调用所有插件的 `register()` 方法获取命令类
+4. 调用 `registerCommand()` 注册命令到注册表
 5. 启动传输层（stdio 或 HTTP）
 6. 开始接受请求
 
