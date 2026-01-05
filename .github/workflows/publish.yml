@@ -22,9 +22,9 @@ jobs:
       - name: 🔍 检测版本变化
         id: version
         run: |
-          # 检测 core 包版本变化
-          OLD=$(git show HEAD^:packages/core/package.json 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "0.0.0")
-          NEW=$(grep '"version"' packages/core/package.json | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+          # 检测根目录 package.json 版本变化
+          OLD=$(git show HEAD^:package.json 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "0.0.0")
+          NEW=$(grep '"version"' package.json | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
           echo "old=$OLD" >> $GITHUB_OUTPUT
           echo "new=$NEW" >> $GITHUB_OUTPUT
           if [ "$OLD" != "$NEW" ]; then
