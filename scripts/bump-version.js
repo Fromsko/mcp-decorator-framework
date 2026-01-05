@@ -40,8 +40,9 @@ function syncCoreDeps(coreVersion) {
   ["math", "filesystem", "http"].forEach((name) => {
     const pkgPath = packages[name];
     const data = JSON.parse(readFileSync(pkgPath, "utf8"));
+    // Use workspace protocol for monorepo - pnpm will convert on publish
     if (data.dependencies && data.dependencies["@mcp-decorator/core"]) {
-      data.dependencies["@mcp-decorator/core"] = `^${coreVersion}`;
+      data.dependencies["@mcp-decorator/core"] = "workspace:^";
     }
     if (data.peerDependencies && data.peerDependencies["@mcp-decorator/core"]) {
       data.peerDependencies["@mcp-decorator/core"] = `^${coreVersion}`;

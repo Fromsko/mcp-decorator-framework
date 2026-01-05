@@ -41,7 +41,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@mcp-decorator/core": "^0.1.1",
+    "@mcp-decorator/core": "workspace:^",
     "zod": "^3.25.76"
   },
   "peerDependencies": {
