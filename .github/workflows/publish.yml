@@ -51,7 +51,7 @@ jobs:
 
       - name: 📦 安装依赖
         if: steps.version.outputs.changed == 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: 🔨 构建所有包
         if: steps.version.outputs.changed == 'true'
