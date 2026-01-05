@@ -1,0 +1,133 @@
+name: 🚀 发布到 NPM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: 📥 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🔍 检测版本变化
+        id: version
+        run: |
+          # 检测 core 包版本变化
+          OLD=$(git show HEAD^:packages/core/package.json 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "0.0.0")
+          NEW=$(grep '"version"' packages/core/package.json | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+          echo "old=$OLD" >> $GITHUB_OUTPUT
+          echo "new=$NEW" >> $GITHUB_OUTPUT
+          if [ "$OLD" != "$NEW" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📦 版本变化: $OLD → $NEW"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "⏭️ 版本未变化: $NEW"
+          fi
+
+      - name: ⚙️ 设置 pnpm
+        if: steps.version.outputs.changed == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: ⚙️ 设置 Node.js
+        if: steps.version.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+
+      - name: 📦 安装依赖
+        if: steps.version.outputs.changed == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔨 构建所有包
+        if: steps.version.outputs.changed == 'true'
+        run: pnpm run build
+
+      - name: 🧪 运行测试
+        if: steps.version.outputs.changed == 'true'
+        run: pnpm test
+
+      - name: 🔐 配置 npm 认证
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: 🚀 发布 Core 包
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          cd packages/core
+          npm publish --access public
+          echo "✅ @mcp-decorator/core 发布成功"
+
+      - name: ⏳ 等待 NPM 索引更新
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          echo "等待 NPM 索引更新..."
+          sleep 60
+
+      - name: 🚀 发布 Math 插件
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          cd packages/plugin-math
+          npm publish --access public
+          echo "✅ @mcp-decorator/plugin-math 发布成功"
+
+      - name: 🚀 发布 Filesystem 插件
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          cd packages/plugin-filesystem
+          npm publish --access public
+          echo "✅ @mcp-decorator/plugin-filesystem 发布成功"
+
+      - name: 🚀 发布 HTTP 插件
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          cd packages/plugin-http
+          npm publish --access public
+          echo "✅ @mcp-decorator/plugin-http 发布成功"
+
+      - name: 🏷️ 创建 Git 标签
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version.outputs.new }}" -m "Release v${{ steps.version.outputs.new }}"
+          git push --tags
+
+      - name: 📝 创建 GitHub Release
+        if: steps.version.outputs.changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.new }}
+          release_name: Release v${{ steps.version.outputs.new }}
+          body: |
+            ## 📦 发布的包
+
+            - [@mcp-decorator/core@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/core)
+            - [@mcp-decorator/plugin-math@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-math)
+            - [@mcp-decorator/plugin-filesystem@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-filesystem)
+            - [@mcp-decorator/plugin-http@${{ steps.version.outputs.new }}](https://www.npmjs.com/package/@mcp-decorator/plugin-http)
+
+            查看 [CHANGELOG.md](https://github.com/fromsko/mcp-decorator-framework/blob/main/CHANGELOG.md) 了解详细变更。
+          draft: false
+          prerelease: false
+
+      - name: ⏭️ 跳过发布
+        if: steps.version.outputs.changed == 'false'
+        run: echo "版本未变化，跳过发布"
